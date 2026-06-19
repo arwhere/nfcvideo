@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>VideoTag</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Кнопка на весь экран для запуска */
+        #playBtn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #111;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 3;
+        }
+        #playBtn:active {
+            background: #222;
+        }
+
+        /* Видео — будет скрыто за кнопкой, пока не запустят */
+        #bgVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        /* Затемнение поверх видео */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Кнопка "Заглушить" = переход в Telegram */
+        #muteBtn {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 35px;
+            border: 2px solid #ff3333;
+            background: rgba(0,0,0,0.6);
+            color: #ff3333;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 4;
+            display: none;
+            text-decoration: none;
+        }
+        #muteBtn:active {
+            background: rgba(255, 51, 51, 0.3);
+        }
+
+        #status {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #aaa;
+            font-family: sans-serif;
+            font-size: 14px;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">Нажми в любом месте для запуска</div>
+    <button id="playBtn">▶ НАЖМИ ДЛЯ ЗАПУСКА</button>
+
+    <video id="bgVideo" playsinline loop muted preload="auto">
+        <source src="video.mp4" type="video/mp4">
+    </video>
+
+    <div id="overlay"></div>
+
+    <a id="muteBtn" href="https://t.me/arwhere" target="_blank">🔇 ЗАГЛУШИТЬ</a>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .catch(err => console.log('SW ошибка', err));
+        }
+
+        const video = document.getElementById('bgVideo');
+        const playBtn = document.getElementById('playBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const status = document.getElementById('status');
+
+        playBtn.addEventListener('click', () => {
+            video.play()
+                .then(() => {
+                    playBtn.style.display = 'none';
+                    muteBtn.style.display = 'block';
+                    status.textContent = '▶ Играет';
+                })
+                .catch(e => {
+                    status.textContent = 'Ошибка: ' + e.message;
+                });
+        });
+
+        // Поддержка Media Session API для управления с локскрина
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: 'Видео',
+                artist: 'arwhere',
+                album: 'VideoTag',
+            });
+            navigator.mediaSession.setActionHandler('play', () => video.play());
+            navigator.mediaSession.setActionHandler('pause', () => video.pause());
+        }
+    </script>
+</body>
+</html>
